@@ -4,69 +4,97 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
+@WebServlet(name = "QuizServlet", urlPatterns = "/quizSubmit")
+/**
+ * QuizServlet processes quiz submissions from a web form.
+ * <p>
+ * It evaluates user answers, calculates the score,
+ * identifies incorrect responses, and forwards results to a JSP page.
+ * </p>
+ * 
+ * Servlet URL: {@code /quizSubmit}
+ */
 @WebServlet(name = "QuizServlet", urlPatterns = "/quizSubmit")
 public class QuizServlet extends HttpServlet {
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        // Retrieve parameters from the HTML form
-        String question1Answer = request.getParameter("question1");
-        String question2Answer = request.getParameter("question2");
-        String question3Answer = request.getParameter("question3");
-        String question4Answer = request.getParameter("question4");
-        String question5Answer = request.getParameter("question5");
+    private static final Map<String, String> correctAnswers = new HashMap<>();
 
-        // Basic validation and processing (for demonstration purposes)
-        int score = 0;
-        if ("correct_answer_q1".equalsIgnoreCase(question1Answer)) {
-            score++;
-        }
-        if ("correct_answer_q2".equalsIgnoreCase(question2Answer)) {
-            score++;
-        }
-        if ("correct_answer_q3".equalsIgnoreCase(question3Answer)) {
-            score++;
-        }
-        if ("correct_answer_q4".equalsIgnoreCase(question4Answer)) {
-            score++;
-        }
-        if ("correct_answer_q5".equalsIgnoreCase(question5Answer)) {
-            score++;
-        }
-        
-        // Store correct answers (example - you'd fetch this from a source like a database)
-        Map<String, String> correctAnswers = new HashMap<>();
+    static {
+        // Initialize correct answers
         correctAnswers.put("question1", "correct_answer_q1");
         correctAnswers.put("question2", "correct_answer_q2");
         correctAnswers.put("question3", "correct_answer_q3");
         correctAnswers.put("question4", "correct_answer_q4");
         correctAnswers.put("question5", "correct_answer_q5");
-        
+    }
+     /**
+     * Handles HTTP POST requests for quiz submissions.
+     * <p>
+     * Retrieves user answers from the request, compares them to the correct answers,
+     * calculates the total score, identifies incorrect questions, and
+     * forwards the result to {@code quizResult.jsp}.
+     * </p>
+     *
+     * @param request  the {@code HttpServletRequest} object that contains the form data
+     * @param response the {@code HttpServletResponse} object used to return the result
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs during request handling
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+
+        // Retrieve user responses
+        Map<String, String> userAnswers = new HashMap<>();
+        userAnswers.put("question1", request.getParameter("question1"));
+        userAnswers.put("question2", request.getParameter("question2"));
+        userAnswers.put("question3", request.getParameter("question3"));
+        userAnswers.put("question4", request.getParameter("question4"));
+        userAnswers.put("question5", request.getParameter("question5"));
+
+        int score = 0;
         List<String> incorrectQuestions = new ArrayList<>();
-        if (!"correct_answer_q1".equalsIgnoreCase(question1Answer)) {
-            incorrectQuestions.add("Question 1: What color is the sky?"); // Or the full question text
+
+        for (Map.Entry<String, String> entry : correctAnswers.entrySet()) {
+            String questionKey = entry.getKey();
+            String correctAnswer = entry.getValue();
+            String userAnswer = userAnswers.get(questionKey);
+
+            if (correctAnswer.equalsIgnoreCase(userAnswer)) {
+                score++;
+            } else {
+                incorrectQuestions.add(getFullQuestionText(questionKey));
+            }
         }
-        if (!"correct_answer_q2".equalsIgnoreCase(question2Answer)) {
-            incorrectQuestions.add("Question 2: What is 2 + 2?");
-        }
-        if (!"correct_answer_q3".equalsIgnoreCase(question3Answer)) {
-            incorrectQuestions.add("Question 3: What is 5 x 4?");
-        }
-        if (!"correct_answer_q4".equalsIgnoreCase(question4Answer)) {
-            incorrectQuestions.add("Question 4: Where can you buy the books?");
-        }
-        if (!"correct_answer_q5".equalsIgnoreCase(question5Answer)) {
-            incorrectQuestions.add("Question 5: Convert decimal to fraction 62.82?");
-        }
-        
+
+        // Set attributes for result display
         request.setAttribute("userScore", score);
         request.setAttribute("incorrectQuestions", incorrectQuestions);
-        request.setAttribute("correctAnswers", correctAnswers); // To show correct answers for missed questions
+        request.setAttribute("correctAnswers", correctAnswers);
 
-        // Forward to a JSP page to display the results
+        // Forward to the results JSP page
         request.getRequestDispatcher("/quizResult.jsp").forward(request, response);
+    }
+
+    /**
+     * Returns the full text of a quiz question based on its key.
+     *
+     * @param questionKey the identifier for the question (e.g., "question1")
+     * @return the full question text, or "Unknown Question" if not found
+     */
+    private String getFullQuestionText(String questionKey) {
+        return switch (questionKey) {
+            case "question1" -> "Question 1: What color is the sky?";
+            case "question2" -> "Question 2: What is 2 + 2?";
+            case "question3" -> "Question 3: What is 5 x 4?";
+            case "question4" -> "Question 4: Where can you buy the books?";
+            case "question5" -> "Question 5: Convert decimal to fraction 62.82?";
+            default -> "Unknown Question";
+        };
     }
 }
