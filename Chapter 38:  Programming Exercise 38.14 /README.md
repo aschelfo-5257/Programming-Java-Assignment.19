@@ -1,6 +1,6 @@
 ## Additional Quiz Servlet
 
-### Pop Quiz: 
+### Servlet Quiz: 
 Creating an additional quiz servlet in Java involves defining a new Java class that extends HttpServlet and handles HTTP requests related to quiz functionality. This servlet would typically manage the display of quiz questions, process user answers, and potentially track scores based on right or wrong answers.
 
 - <mark>@WebServlet("/QuizServlet"):</mark> This annotation maps the servlet to the /QuizServlet URL pattern.
